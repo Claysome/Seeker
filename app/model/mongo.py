@@ -15,7 +15,7 @@ import websocket
 
 class WebsocketConnector:
     def __init__(self):
-        self.client = MongoClient()
+        self.client = MongoClient("mongodb://localhost:27017/")
         self.db = self.client["binance"]
         self.collection = self.db["btcusdt_aggtrades"]
         websocket.enableTrace(True)
@@ -38,9 +38,15 @@ class WebsocketConnector:
 
     def on_message(self, _, message):
         json_message = json.loads(message)
-        trade_info = json_message["data"]
+        data = {
+            "symbol": json_message["s"],
+            "price": json_message["p"],
+            "quantity": json_message["q"],
+            "trade_id": json_message["a"],
+            "time": json_message["T"]
+        }
         # 将数据存入 MongoDB
-        result = self.collection.insert_one(trade_info)
+        result = self.collection.insert_one(data)
         print(f"Inserted document with ID {result.inserted_id}")
 
     def connect(self):

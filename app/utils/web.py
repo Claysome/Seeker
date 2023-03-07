@@ -34,7 +34,7 @@ def api_message_handler(_, message):
     logging.info(message)
 
 def stream_message_handler(_, message):
-    logging.info("STREAM: ")
+    logging.info("STREAM Hello server: ")
     logging.info(message)
 
 
