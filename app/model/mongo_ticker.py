@@ -13,11 +13,11 @@ from pymongo import MongoClient
 import websocket
 
 
-class WebsocketConnector:
+class WebsocketConnectorBookTicker:
     def __init__(self):
         self.client = MongoClient("mongodb://localhost:27017/")
         self.db = self.client["binance"]
-        self.collection = self.db["btcusdt_aggtrades"]
+        self.collection = self.db["btcusdt_bookticker"]
         websocket.enableTrace(True)
         self.url = "wss://stream.binance.com:9443/ws"
         self.socket = None
@@ -27,7 +27,7 @@ class WebsocketConnector:
             "method": "SUBSCRIBE",
             "params":
                 [
-                    "btcusdt@aggTrade"
+                    "btcusdt@bookTicker"
                 ],
             "id": 1
         }
@@ -39,12 +39,14 @@ class WebsocketConnector:
     def on_message(self, _, message):
         json_message = json.loads(message)
         data = {
+            "time": json_message["u"],
             "symbol": json_message["s"],
-            "price": json_message["p"],
-            "quantity": json_message["q"],
-            "trade_id": json_message["a"],
-            "time": json_message["T"]
+            "bid_price": json_message["b"],
+            "bid_quantity": json_message["B"],
+            "ask_price": json_message["a"],
+            "ask_quantity": json_message["A"]
         }
+        # print(data)
         # 将数据存入 MongoDB
         result = self.collection.insert_one(data)
         print(f"Inserted document with ID {result.inserted_id}")
@@ -56,7 +58,6 @@ class WebsocketConnector:
                                              on_message=self.on_message)
         self.socket.run_forever()
 
-
 if __name__ == "__main__":
-    connector = WebsocketConnector()
-    connector.connect()  
+    ticker = WebsocketConnectorBookTicker()
+    ticker.connect()  
